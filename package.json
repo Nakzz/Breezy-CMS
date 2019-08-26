@@ -1,0 +1,30 @@
+{
+  "name": "@keystone-alpha/example-projects-starter",
+  "description": "An example KeystoneJS project with a User list and Authentication.",
+  "private": true,
+  "version": "1.1.6",
+  "author": "The KeystoneJS Development Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=8.4.0"
+  },
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development DISABLE_LOGGING=true keystone dev",
+    "build": "cross-env NODE_ENV=production keystone build",
+    "start": "cross-env NODE_ENV=production keystone start"
+  },
+  "dependencies": {
+    "@keystone-alpha/adapter-mongoose": "^4.0.0",
+    "@keystone-alpha/app-admin-ui": "^5.2.0",
+    "@keystone-alpha/app-graphql": "^6.3.1",
+    "@keystone-alpha/fields": "^10.2.0",
+    "@keystone-alpha/app-static": "^1.1.0",
+    "@keystone-alpha/auth-password": "^1.0.0",
+    "@keystone-alpha/fields-markdown": "^1.0.3",
+    "@keystone-alpha/fields-wysiwyg-tinymce": "^3.0.5",
+    "@keystone-alpha/file-adapters": "^1.1.1",
+    "@keystone-alpha/keystone": "^11.0.0",
+    "@keystone-alpha/oembed-adapters": "^1.1.2",
+    "cross-env": "^5.2.0"
+  }
+}
