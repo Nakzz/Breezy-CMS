@@ -51,7 +51,6 @@ exports.User = {
 
         name: { type: Text },
         email: { type: Text, isUnique: true },
-
         password: { type: Password },
         phone: { type: Text, defaultValue: null, isUnique: true },
         phoneVerified: { type: Checkbox },
