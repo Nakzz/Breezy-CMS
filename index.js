@@ -1,11 +1,11 @@
-const { Keystone, PasswordAuthStrategy } = require('@keystone-alpha/keystone');
-const { Text, Checkbox, Password } = require('@keystone-alpha/fields');
+const { Keystone } = require('@keystone-alpha/keystone');
+const { PasswordAuthStrategy } = require('@keystone-alpha/auth-password');
 const { GraphQLApp } = require('@keystone-alpha/app-graphql');
 const { AdminUIApp } = require('@keystone-alpha/app-admin-ui');
 const { MongooseAdapter: Adapter } = require('@keystone-alpha/adapter-mongoose');
 
 const { staticRoute, staticPath, distDir } = require('./config');
-const { User, RFID} = require('./models');
+const { User, RFID, Offers, Products, Events, Transactions, Drinks, Recipes, RelaysAmount} = require('./models');
 
 const PROJECT_NAME = "Breezy CMS";
 
@@ -26,34 +26,17 @@ const keystone = new Keystone({
 });
 
 
-
-// keystone.createList('User', {
-//   fields: {
-//     name: { type: Text },
-//     email: {
-//       type: Text,
-//       isUnique: true,
-//     },
-//     isAdmin: { type: Checkbox },
-//     password: {
-//       type: Password,
-//     },
-//   },
-//   access: {
-//     read: access.userIsAdminOrOwner,
-//     update: access.userIsAdminOrOwner,
-//     create: access.userIsAdmin,
-//     delete: access.userIsAdmin,
-//   },
-// });
-
-// const authStrategy = keystone.createAuthStrategy({
-//   type: PasswordAuthStrategy,
-//   list: 'User',
-// });
-
+//Create all the lists from their model
 keystone.createList('User', User);
 keystone.createList('RFID', RFID);
+keystone.createList('Offer', Offers);
+keystone.createList('Product', Products);
+keystone.createList('Event', Events);
+keystone.createList('Transaction', Transactions);
+keystone.createList('Drink', Drinks);
+keystone.createList('Recipe', Recipes);
+keystone.createList('RelaysAmount', RelaysAmount);
+
 
 // const authStrategy = keystone.createAuthStrategy({
 //   type: PasswordAuthStrategy,
