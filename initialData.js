@@ -9,7 +9,7 @@ module.exports = {
 
   ],
 
-  Products = [
+  Products : [
     {
       name: 'Beer',
       price: 2,

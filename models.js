@@ -69,6 +69,9 @@ exports.User = {
         isAdmin : {type: Checkbox},
         referal: { type: Relationship, ref: 'User', many: true },
         referred: { type: Relationship, ref: 'User', many: false },
+         // This field name must match the `idField` setting passed to the auth
+    // strategy constructor below
+    googleId: { type: Text },
         slug: { type: Slug, from: 'email' },
     },
     labelResolver: item => `${item.name} <${item.email}>`,
@@ -233,11 +236,13 @@ exports.Recipes = {
 
 exports.RelaysAmount = {
     fields: {
+        name: {type:Text},
         amount: { type: Float },
         relay : {type: Relationship, ref: 'Drink'},
         for: {type: Relationship, ref: 'Recipe'},
 
     },
+    labelResolver: item => item.name,
     access: {
         create: true,
         read: true,
