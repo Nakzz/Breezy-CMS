@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors')
 const { keystone, apps } = require('./index');
 const { port } = require('./config');
-// const initialData = require('./data');
+const initialData = require('./initialData');
 var bodyParser = require('body-parser')
 var moment = require('moment');
 
@@ -367,6 +367,7 @@ keystone
     app.use(middlewares);
 
     app.listen(port, error => {
+      console.log("Listening at port", port)
       if (error) throw error;
     });
   })
