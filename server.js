@@ -27,13 +27,13 @@ keystone
 
     // Initialise some data.
     // NOTE: This is only for test purposes and should not be used in production
-    const users = await keystone.lists.User.adapter.findAll();
-    if (!users.length) {
-      Object.values(keystone.adapters).forEach(async adapter => {
-        await adapter.dropDatabase();
-      });
-      // await keystone.createItems(initialData);
-    }
+    // const users = await keystone.lists.User.adapter.findAll();
+    // if (!users.length) {
+    //   Object.values(keystone.adapters).forEach(async adapter => {
+    //     await adapter.dropDatabase();
+    //   });
+    //   // await keystone.createItems(initialData);
+    // }
 
     const app = express();
     app.use(cors())
@@ -49,13 +49,13 @@ keystone
     // app.use("/api", routes) 
 
 
-    app.get('/reset-db', async (req, res) => {
-      Object.values(keystone.adapters).forEach(async adapter => {
-        await adapter.dropDatabase();
-      });
-      await keystone.createItems(initialData);
-      res.redirect('/admin');
-    });
+    // app.get('/reset-db', async (req, res) => {
+    //   Object.values(keystone.adapters).forEach(async adapter => {
+    //     await adapter.dropDatabase();
+    //   });
+    //   await keystone.createItems(initialData);
+    //   res.redirect('/admin');
+    // });
 
 
     app.get('/get-recipes', async (req, res) => {
@@ -68,33 +68,24 @@ keystone
                 name
                 price
                 desc
-                type
                 alcoholic
-                drink1 {
-                  name
-                  motorNum
+                status
+                Relays{
+                  relay{
+                    relayNum
+                  }
+                  amount
                 }
-                drink1amt
-                drink2 {
-                  name
-                  motorNum
-                }
-                drink2amt
-                  drink3 {
-                  name
-                  motorNum
-                }
-                drink3amt
-                  drink4 {
-                  name
-                  motorNum
-                }
-                drink4amt}
+               }
             }`,
-        // variables: { id: 1 },
       }).then(allRecipes => {
-        console.log(allRecipes)
-        res.send(allRecipes.data)
+        console.log(allRecipes.data.allRecipes)
+
+        let publishedDrinks = allRecipes.data.allRecipes.filter(elem => elem.status == "published")
+
+        res.send({
+            allRecipes: publishedDrinks
+        })
       });
     })
 
@@ -114,15 +105,6 @@ keystone
           allTransactions{
             id
           }
-          offers{
-            id
-            drink{
-              id
-              name
-            }
-            quantity
-            expires
-          }
         }
         allRecipes{
           id
@@ -136,6 +118,9 @@ keystone
         }
       }`,
       }).then(db => {
+
+
+        console.log(db)
 
         var userRfidID = req.body["rfid"],
           userRecipeID = req.body["recipeID"];
@@ -353,7 +338,12 @@ keystone
           )
 
         } else {
-          res.send({ status: "failed", method:"balance", result: stat.data })
+
+          res.send({ status: "failed", method:"balance", 
+          result: rfidFound[0]
+        })
+
+
         }
 
 

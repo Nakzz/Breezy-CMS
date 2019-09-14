@@ -135,12 +135,13 @@ exports.Transactions = {
     
 }
 
+
+
 exports.Offers = {
     fields: {
         name: {type: Text},
         item: { type: Relationship, ref: 'Product', many: false },
         drink: { type: Relationship, ref: 'Recipe', many: false },
-        // For: { type: Relationship, ref: 'User', many: false },
         assosciatedUser: { type: Relationship, ref: 'User.offers', many: false },
         expires: { type: DateTime },
         quantity: { type: Integer },
@@ -203,14 +204,14 @@ exports.Recipes = {
         name: { type: Text },
         price: { type: Float },
         desc: { type: Wysiwyg },
-        type: {type: Select, options: 'drink, shot' },
-        alcoholic: { type: Checkbox },
+
+        alcoholic: { type: Checkbox, defaultValue:true },
         status: {
             type: Select,
             defaultValue: 'draft',
             options: [{ label: 'Draft', value: 'draft' }, { label: 'Published', value: 'published' }],
           },
-        Relays : {type: Relationship, ref: 'RelaysAmount.for', many:true},
+        Relays : {type: Relationship, ref: 'RelaysAmount.for', many:true, required: true},
         slug: { type: Slug, from: 'name' },
 
         // img: { type: File, adapter: fileAdapter },
