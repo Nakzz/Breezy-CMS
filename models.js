@@ -45,8 +45,44 @@ const userIsAdminOrOwner = auth => {
     const isOwner = access.userOwnsItem(auth);
     return isAdmin ? isAdmin : isOwner;
 };
-const access = { userIsAdmin, userOwnsItem, userIsAdminOrOwner };
 
+const access = {
+    userIsAdmin: ({ authentication: { item: user } }) => Boolean(user && user.isAdmin),
+    userOwnsItem : ({ authentication: { item: user } }) => {
+        if (!user) {
+            return false;
+        }
+        return { id: user.id };
+    },
+    userIsCurrentAuth: ({ authentication: { item } }) => {
+      if (!item) {
+        return false;
+      }
+      return { id: item.id };
+    },
+  };
+  
+  // Read: public / Write: admin
+  const DEFAULT_LIST_ACCESS = {
+    create: access.userIsAdmin,
+    read: true,
+    update: access.userIsAdmin,
+    delete: access.userIsAdmin,
+  };
+
+  const ADMIN_LIST_ACCESS = {
+    create: access.userIsAdmin,
+    read: access.userIsAdmin,
+    update: access.userIsAdmin,
+    delete: access.userIsAdmin,
+  };
+
+    const ALL_ACCESS = {
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+    };
 
 //DEFINE ALL THE MODELS
 exports.User = {
@@ -57,18 +93,25 @@ exports.User = {
         password: { type: Password },
         phone: { type: Text, defaultValue: null },
         phoneVerified: { type: Checkbox },
-        ig: {type: Text},
+        igHandle: {type: Text},
         RFID: { type: Relationship, ref: 'RFID' },
         prevRFID: { type: Text },
-        offers: { type: Relationship, ref: 'Offer', many: true },
+        offers: {
+            type: Relationship,
+            ref: 'ActivedOffer', 
+            many: true
+        },
         level: {
             type: Select,
             options: ['admin', 'manager', 'customer', 'guest', 'board', 'support_board'],
+            // access: {update: access.userIsAdmin }
         },
         note: { type: Text },
-        isAdmin : {type: Checkbox},
-        referal: { type: Relationship, ref: 'User', many: true },
-        referred: { type: Relationship, ref: 'User', many: false },
+        isAdmin : {type: Checkbox,  
+            // access: {read:access.userIsAdmin ,update: access.userIsAdmin }
+        },
+        referal: { type: Relationship, ref: 'User.referred', many: true },
+        referred: { type: Relationship, ref: 'User.referal', many: false },
          // This field name must match the `idField` setting passed to the auth
     // strategy constructor below
     googleId: { type: Text },
@@ -81,12 +124,7 @@ exports.User = {
     //     update: userIsAdminOrOwner,
     //     delete: userIsAdmin,
     // },
-    access: {
-        create: true,
-        read: true,
-        update: true,
-        delete: true,
-    },
+    access: ALL_ACCESS,
     plugins: [atTracking()]
 };
 
@@ -101,13 +139,11 @@ exports.RFID = {
         allTransactions: {type: Relationship, ref: 'Transaction', many: true},
 
     },
-    labelResolver: item => item.cardID ,
-    access: {
-        create: true,
-        read: true,
-        update: true,
-        delete: true,
-    },
+    labelResolver: item => {
+        return  item.cardID
+    }  ,
+    access: ALL_ACCESS,
+    
     plugins: [atTracking()]
 }
 
@@ -126,36 +162,74 @@ exports.Transactions = {
         return item.price
     } , plugins: [atTracking() ,
          createdAt({ createdAtField: 'whenCreated' }),],
-    access: {
-        create: true,
-        read: true,
-        update: true,
-        delete: true,
-    },
+    access: ALL_ACCESS,
     
 }
 
-
-
 exports.Offers = {
     fields: {
-        name: {type: Text},
-        item: { type: Relationship, ref: 'Product', many: false },
-        drink: { type: Relationship, ref: 'Recipe', many: false },
-        assosciatedUser: { type: Relationship, ref: 'User.offers', many: false },
-        expires: { type: DateTime },
-        quantity: { type: Integer },
-        slug: { type: Slug, from: 'name' },
+        name: {
+            type: Text
+        },
+        item: {
+            type: Relationship,
+            ref: 'Product',
+            many: false
+        },
+        drink: {
+            type: Relationship,
+            ref: 'Recipe',
+            many: false
+        },
+
+        slug: {
+            type: Slug,
+            from: 'name'
+        },
 
     },
-    labelResolver: item => `${item.name} ${item.ForRFID} <${item.quantity}>`,
+    labelResolver: item => `${item.name}`,
     access: {
         create: true,
         read: true,
         update: true,
         delete: true,
     },
-    plugins: [atTracking()]
+    // plugins: [atTracking()]
+    // hooks :{
+    //     afterChange: async (...) => { ... },
+    // TODO: remove offer is  quanity is 0 or expired
+    // }
+}
+
+exports.ActiveOffers = {
+    fields: {
+        offer: {
+            type: Relationship,
+            ref: 'Offer',
+            many: false
+        },
+        assosciatedUser: { type: Relationship, ref: 'User.offers', many: false },
+        // expires: { type: DateTime },
+        quantity: { type: Integer },
+        slug: {
+            type: Slug,
+            from: 'offer'
+        },
+
+    },
+    access: {
+        create: true,
+        read: true,
+        update: true,
+        delete: true,
+    },
+    labelResolver: async (item) => {
+
+        return `${item.offer} <${item.quantity}>`
+    },
+
+
     // hooks :{
     //     afterChange: async (...) => { ... },
     // TODO: remove offer is  quanity is 0 or expired
@@ -194,7 +268,7 @@ exports.Drinks = {
         create: true,
         read: true,
         update: true,
-        delete: false,
+        delete: true,
     },plugins: [atTracking()]
 }
 
@@ -268,7 +342,7 @@ exports.Events = {
         startTime: { type: DateTime },
         endTime: { type: DateTime },
         flyer: { type: File, adapter: fileAdapter },
-        Transactions : { type: Relationship, ref: 'Transaction.price', many: true },
+        Transactions : { type: Relationship, ref: 'Transaction.whenCreated', many: true },
     },
     labelResolver: item => `${item.name} <${item.posted}>`,
     access: {

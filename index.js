@@ -5,7 +5,18 @@ const { AdminUIApp } = require('@keystone-alpha/app-admin-ui');
 const { MongooseAdapter: Adapter } = require('@keystone-alpha/adapter-mongoose');
 
 const { staticRoute, staticPath, distDir } = require('./config');
-const { User, RFID, Offers, Products, Events, Transactions, Drinks, Recipes, RelaysAmount} = require('./models');
+const {
+    User,
+    RFID,
+    Offers,
+    Products,
+    Events,
+    Transactions,
+    Drinks,
+    Recipes,
+    RelaysAmount,
+    ActiveOffers
+} = require('./models');
 
 const PROJECT_NAME = "Breezy CMS";
 
@@ -31,7 +42,7 @@ const keystone = new Keystone({
     list: true,
     field: true,
   },
-  cookieSecret,
+//   cookieSecret,
 });
 
 
@@ -45,52 +56,55 @@ keystone.createList('Transaction', Transactions);
 keystone.createList('Drink', Drinks);
 keystone.createList('Recipe', Recipes);
 keystone.createList('RelaysAmount', RelaysAmount);
-
-const googleStrategy = keystone.createAuthStrategy({
-  type: GoogleAuthStrategy,
-  list: 'User',
-  config: {
-    idField: 'googleId',
-    appId: '127811358196-mdu0m8koevfjukmh1hu9n6ig35v8om0r.apps.googleusercontent.com',
-    appSecret: 'b-LGspw-JL_1MUeLtJePJTkA',
-    loginPath: '/auth/google',
-    callbackPath: '/auth/google/callback',
+keystone.createList('ActivedOffer', ActiveOffers);
 
 
-    // Once a user is found/created and successfully matched to the
-    // googleId, they are authenticated, and the token is returned here.
-    // NOTE: By default KeystoneJS sets a `keystone.sid` which authenticates the
-    // user for the API domain. If you want to authenticate via another domain,
-    // you must pass the `token` as a Bearer Token to GraphQL requests.
-    onAuthenticated: ({ token, item, isNewItem }, req, res) => {
-      console.log("onAuthenticated is called")
-      console.log(item);
-      console.log(token);
-      res.redirect('/');
-    },
 
-    // If there was an error during any of the authentication flow, this
-    // callback is executed
-    onError: (error, req, res) => {
-      console.log("Error was found")
-      console.error(error);
-      res.redirect('/?error=Uh-oh');
-    },
-  },
-});
+// const googleStrategy = keystone.createAuthStrategy({
+//   type: GoogleAuthStrategy,
+//   list: 'User',
+//   config: {
+//     idField: 'googleId',
+//     appId: '127811358196-mdu0m8koevfjukmh1hu9n6ig35v8om0r.apps.googleusercontent.com',
+//     appSecret: 'b-LGspw-JL_1MUeLtJePJTkA',
+//     loginPath: '/auth/google',
+//     callbackPath: '/auth/google/callback',
+
+
+//     // Once a user is found/created and successfully matched to the
+//     // googleId, they are authenticated, and the token is returned here.
+//     // NOTE: By default KeystoneJS sets a `keystone.sid` which authenticates the
+//     // user for the API domain. If you want to authenticate via another domain,
+//     // you must pass the `token` as a Bearer Token to GraphQL requests.
+//     onAuthenticated: ({ token, item, isNewItem }, req, res) => {
+//       console.log("onAuthenticated is called")
+//       console.log(item);
+//       console.log(token);
+//       res.redirect('/');
+//     },
+
+//     // If there was an error during any of the authentication flow, this
+//     // callback is executed
+//     onError: (error, req, res) => {
+//       console.log("Error was found")
+//       console.error(error);
+//       res.redirect('/?error=Uh-oh');
+//     },
+//   },
+// });
 
 module.exports = {
   keystone,
   apps: [new GraphQLApp(), new AdminUIApp({ 
       enableDefaultRoute: true, 
-      googleStrategy,
+    //   googleStrategy,
           pages: [{
                   label: 'User Management',
-                  children: ['User', 'RFID', 'Offer', 'Transaction'],
+                  children: ['User', 'RFID', 'Offer', 'Transaction', 'ActivedOffer'],
               },
               {
                   label: 'Event Management',
-                  children: ['Event', 'Product', 'Recipe'],
+                  children: ['Event', 'Product'],
               },
               {
                   label: 'Drink Management',

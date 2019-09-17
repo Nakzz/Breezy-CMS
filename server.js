@@ -1,7 +1,12 @@
 const express = require('express');
 const cors = require('cors')
-const { keystone, apps } = require('./index');
-const { port } = require('./config');
+const {
+    keystone,
+    apps
+} = require('./index');
+const {
+    port
+} = require('./config');
 const initialData = require('./initialData');
 var bodyParser = require('body-parser')
 var moment = require('moment');
@@ -10,59 +15,64 @@ var apiRoutes = require('./routes/api')
 var actionRoutes = require('./routes/actions.js') // from another file
 var routes = require('./routes/index')
 
-const { createApolloFetch } = require('apollo-fetch');
+const {
+    createApolloFetch
+} = require('apollo-fetch');
 
 const fetch = createApolloFetch({
-  uri: 'http://localhost:3000/admin/api',
+    uri: 'http://localhost:3000/admin/api',
+
 });
 
 
 keystone
-  .prepare({
-    apps,
-    dev: process.env.NODE_ENV !== 'production',
-  })
-  .then(async ({ middlewares }) => {
-    await keystone.connect(process.env.MONGODB_URI);
+    .prepare({
+        apps,
+        dev: process.env.NODE_ENV !== 'production',
+    })
+    .then(async ({
+        middlewares
+    }) => {
+        await keystone.connect(process.env.MONGODB_URI);
 
-    // Initialise some data.
-    // NOTE: This is only for test purposes and should not be used in production
-    // const users = await keystone.lists.User.adapter.findAll();
-    // if (!users.length) {
-    //   Object.values(keystone.adapters).forEach(async adapter => {
-    //     await adapter.dropDatabase();
-    //   });
-    //   // await keystone.createItems(initialData);
-    // }
+        // Initialise some data.
+        // NOTE: This is only for test purposes and should not be used in production
+        // const users = await keystone.lists.User.adapter.findAll();
+        // if (!users.length) {
+        //   Object.values(keystone.adapters).forEach(async adapter => {
+        //     await adapter.dropDatabase();
+        //   });
+        //   // await keystone.createItems(initialData);
+        // }
 
-    const app = express();
-    app.use(cors())
-    app.use(bodyParser.json());       // to support JSON-encoded bodies
-    app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-      extended: true
-    }));
+        const app = express();
+        app.use(cors())
+        app.use(bodyParser.json()); // to support JSON-encoded bodies
+        app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
+            extended: true
+        }));
 
-    //ALL ROUTES
-    // app.use('/api', apiRoutes);
-    // app.use('/actions', actionRoutes);
+        //ALL ROUTES
+        // app.use('/api', apiRoutes);
+        // app.use('/actions', actionRoutes);
 
-    // app.use("/api", routes) 
-
-
-    // app.get('/reset-db', async (req, res) => {
-    //   Object.values(keystone.adapters).forEach(async adapter => {
-    //     await adapter.dropDatabase();
-    //   });
-    //   await keystone.createItems(initialData);
-    //   res.redirect('/admin');
-    // });
+        // app.use("/api", routes) 
 
 
-    app.get('/get-recipes', async (req, res) => {
-      console.log("GET RECIPE IS CALLED")
-      fetch({
-        query: `query {
-              allRecipes
+        // app.get('/reset-db', async (req, res) => {
+        //   Object.values(keystone.adapters).forEach(async adapter => {
+        //     await adapter.dropDatabase();
+        //   });
+        //   await keystone.createItems(initialData);
+        //   res.redirect('/admin');
+        // });
+
+
+        app.get('/get-recipes', async (req, res) => {
+            console.log("GET RECIPE IS CALLED")
+            fetch({
+                query: `query {
+              allRecipes 
               {
                 id
                 name
@@ -78,290 +88,411 @@ keystone
                 }
                }
             }`,
-      }).then(allRecipes => {
-        console.log(allRecipes.data.allRecipes)
+            }).then(allRecipes => {
+                console.log(allRecipes.data.allRecipes)
 
-        let publishedDrinks = allRecipes.data.allRecipes.filter(elem => elem.status == "published")
+                let publishedDrinks = allRecipes.data.allRecipes.filter(elem => elem.status == "published")
 
-        res.send({
-            allRecipes: publishedDrinks
+                res.send({
+                    allRecipes: publishedDrinks
+                })
+            });
         })
-      });
-    })
 
 
-    app.post('/purchase', async (req, res) => {
+        app.post('/purchase', async (req, res) => {
 
-      console.log("Printing re body")
-      console.log(req.body)
+            console.log("Printing re body")
+            console.log(req.body)
 
-      fetch({
-        query: `query {allRFIDS
-        {
-          id
-          cardID
-          balance
-          wopAvailable
-          allTransactions{
-            id
-          }
-        }
-        allRecipes{
-          id
-          name
-          price
-        }
-        allEvents{
-          id
-          startTime
-          endTime
-        }
-      }`,
-      }).then(db => {
+            var userRfidID = req.body["rfid"],
+                userRecipeID = req.body["recipeID"];
+
+            if (!userRecipeID || !userRfidID) {
+                res.status(400).send({
+                    status: "bad-request",
+                    method: "Format data properly with following fields: rfid, recipeID"
+                })
+                return
+            }
 
 
-        console.log(db)
+            let state = {
+                useMoney: false,
+                eventOn: false,
+                method: null
+            }
 
-        var userRfidID = req.body["rfid"],
-          userRecipeID = req.body["recipeID"];
-          allRFIDs = db.data.allRFIDS;
-          allDrinks = db.data.allRecipes;
-          allEvents = db.data.allEvents;
+            fetch({
+                query: `
+                query {allRFIDS(where : {cardID : "${userRfidID}"}) 
+                        {
+                        id
+                        cardID
+                        balance
+                        wopAvailable
+                        allTransactions{
+                            id
+                        }
+                                    assosciatedUser {
+                                        offers {
+                                            offer {
+                                                id
+                                                drink {
+                                                    id
+                                                }
+                                                item {
+                                                    id
+                                                }
+                                            }
+                                            quantity
+                                        }
+                                    }
+                        }
+                        allRecipes(where : {id : "${userRecipeID}"}){
+                        id
+                        name
+                        price
+                        }
+                        allEvents{
+                        id
+                        startTime
+                        endTime
+                        }
+                    }`,
+            }).then(db => {
 
-        let useMoney = false;
-        eventOn = false;
-        
-        // console.log(userRecipeID)
 
-        let drinkFound = allDrinks.filter(item => {
-          return item.id == userRecipeID
+                var allRFIDs = db.data.allRFIDS;
+                allDrinks = db.data.allRecipes;
+                allEvents = db.data.allEvents;
+
+
+                state.drinkFound = allDrinks[0]
+                state.rfidFound = allRFIDs[0]
+
+                // console.log(state.rfidFound.assassosciatedUser)
+
+
+                state.todayEvent = allEvents.filter(item => {
+                    let {
+                        startTime,
+                        endTime
+                    } = item;
+
+                    startTime = new moment(startTime)
+                    endTime = new moment(endTime)
+                    var todayDate = moment()
+
+                    console.log(startTime <= todayDate, endTime >= todayDate)
+                    return startTime <= todayDate && endTime >= todayDate
+
+                })
+
+                if (state.todayEvent.length == 0) {
+                    res.status(404).send({
+                        status: "database-issue",
+                        method: "No event is running now. Are you sure you can drink?"
+                    })
+                    return
+                } else {
+                    state.eventOn = true;
+                    state.useMoney = true;
+                }
+
+                // check if RFID is in database
+                if (!state.drinkFound || !state.rfidFound) {
+                    if (!state.drinkFound) {
+                        res.status(404).send({
+                            status: "database-issue",
+                            method: "recipe not found"
+                        })
+                    }
+
+                    if (!state.rfidFound) {
+                        res.status(404).send({
+                            status: "database-issue",
+                            method: "RFID not found"
+                        })
+                        return
+                    }
+                } else {
+                    console.log("FOUND DRINK AND RFID")
+                    console.log(state.drinkFound)
+                    console.log(state.rfidFound)
+                    state.useMoney = true;
+                }
+
+                //check price of drink
+                // if drink is WOP and wopAvailalbe, decrement
+
+                if (state.drinkFound.name == "WOP" && state.rfidFound.wopAvailable > 0 && state.eventOn) {
+                    state.newWOP = parseInt(state.rfidFound.wopAvailable) - 1
+                    console.log(" Will be decrementing wop")
+                    state.method = "daily_WOP"
+                    state.useMoney = false;
+
+                } else if (state.rfidFound.assosciatedUser && state.rfidFound.assosciatedUser.offers && state.eventOn) {
+
+                    let offers = state.rfidFound.assosciatedUser.offers
+
+                    // console.log(offers)
+
+                    offers = offers.filter(offer => {
+                        // console.log(offer.offer)
+                        // console.log(offer.offer.drink.id)
+                        // console.log(state.drinkFound.id)
+                        return state.drinkFound.id == offer.offer.drink.id && parseInt(offer.quantity) > 0
+                    });
+
+                    if (offers.length > 0) {
+
+                        let offer = offers[0]
+
+                        state.useMoney = false;
+                        state.method = "offer"
+                        state.offerId = offer.offer.id
+                        state.offerCount = parseInt(offer.quantity) - 1
+                        console.log("state.offerCount", state.offerCount)
+
+                    }
+
+
+
+                }
+
+                if (state.useMoney && state.eventOn && state.rfidFound.balance >= state.drinkFound.price) {
+                    state.newBalance = parseFloat(state.rfidFound.balance) - parseFloat(state.drinkFound.price)
+
+                    console.log("new balance should be: ", state.newBalance)
+
+                    state.useMoney = true;
+                    state.method = "balance"
+
+                } else if (!state.method && state.eventOn && state.rfidFound.balance <= state.drinkFound.price) {
+
+                    console.log("No balance")
+                    state.method = "no-balance"
+
+                }
+
+
+
+                //MAKE QUERY BASED ON CASES
+
+                console.log(state.method)
+                switch (state.method) {
+                    case null:
+                        console.log("Shouldn't be getting here")
+                        break;
+
+                        //WOP AVAILALBE CASE START
+                    case "daily_WOP":
+                        console.log("Decrementing wop")
+
+                        fetch({
+                            query: `
+                            mutation{
+                                updateRFID(id: "${state.rfidFound.id}", data: {
+                                            wopAvailable: ${
+                                                state.newWOP
+                                            },
+                                allTransactions: {
+                    create: {
+                            Recipes: {
+                                connect: {
+                                    id: "${state.drinkFound.id}"
+                                }
+                            },
+                            assosciatedRfid: {
+                                connect: {
+                                    id: "${state.rfidFound.id}"
+                                }
+                            },
+                            Event: {
+                                connect: {
+                                    id: "${state.todayEvent[0].id}"
+                                }
+                            }, 
+                            price: 0,
+                            }
+                                } 
+                                } ){
+                                id
+                                balance
+                                wopAvailable
+                                
+                                }
+                            
+                            }
+                        `
+                        }).then(stat => {
+                            console.log("Created transaction in RFID")
+
+                            state.useMoney = false
+                            res.send({
+                                status: "success",
+                                method: state.method,
+                                result: stat.data
+                            })
+
+                        }).catch(e => {
+                            console.log(e)
+                            res.status(500).send({
+                                e,
+                                status: "Something went wrong while decrementing wop"
+                            })
+                        });
+
+                        break;
+
+                    case "offer":
+                        console.log(state.offerCount)
+                        fetch({
+                            query: `
+                                     mutation {
+                                         updateRFID(id: "${state.rfidFound.id}", data: {
+                                             allTransactions: {
+                                                 create: {
+                                                     Recipes: {
+                                                         connect: {
+                                                             id: "${state.drinkFound.id}"
+                                                         }
+                                                     },
+                                                     assosciatedRfid: {
+                                                         connect: {
+                                                             id: "${state.rfidFound.id}"
+                                                         }
+                                                     },
+                                                     Event: {
+                                                         connect: {
+                                                             id: "${state.todayEvent[0].id}"
+                                                         }
+                                                     },
+                                                     price: 0,
+                                                 },
+
+                                             }
+                                         }) {
+                                             id
+                                             balance
+                                             wopAvailable
+                                         }
+
+                                         updateActivedOffer(id: "${state.offerId}", data : {
+                                             quantity : ${state.offerCount}
+                                         }){
+                                            offer{
+                                                name
+                                            }
+                                            quantity
+                                         }
+
+                                     }
+                                  `
+                        }).then(offerReq => {
+                            console.log("Used offer", offerReq)
+
+                            res.send({
+                                status: "success",
+                                method: "offer",
+                                result: offerReq.data
+                            })
+
+                        }).catch(e => {
+                            console.log(e)
+                            res.send({
+                                e,
+                                status: "Something went wrong while decrementing offer"
+                            })
+                        });
+
+
+
+                        break;
+
+                    case "balance":
+
+                        //TODO: add to transactions
+                        fetch({
+                            query: `
+                                mutation{
+                                updateRFID(id: "${state.rfidFound.id}", data: {
+                                        balance: ${
+                                            state.newBalance
+                                        },
+                                        allTransactions: {
+                                            create: {
+                                                Recipes: {
+                                                    connect: {
+                                                        id: "${state.drinkFound.id}"
+                                                    }
+                                                },
+                                                assosciatedRfid: {
+                                                    connect: {
+                                                        id: "${state.rfidFound.id}"
+                                                    }
+                                                },
+                                                Event: {
+                                                    connect: {
+                                                        id: "${state.todayEvent[0].id}"
+                                                    }
+                                                },
+                                                price: ${state.drinkFound.price},
+                                            }
+                                        }
+                                    
+                                    }) {
+                                    id
+                                    balance
+                                    wopAvailable
+                                }
+                                }`
+                        }).then(stat => {
+                            console.log("Changed balance")
+                            res.send({
+                                status: "success",
+                                method: state.method,
+                                result: stat.data
+                            })
+
+                        }).catch(e => {
+                            console.log(e)
+                            res.send({
+                                e,
+                                status: "Something went wrong while updating balance"
+                            })
+
+                        })
+
+                        break;
+
+
+                    default:
+
+                        console.log("Failed for some reason- maybe balance?")
+                        console.log(state.rfidFound)
+
+                        res.status(500).send({
+                            status: "failed",
+                            method: state.method,
+                            result: state.rfidFound // TODO: dont send all transactions and card id. 
+                        })
+                }
+
+            });
+
         });
 
-        let rfidFound = allRFIDs.filter(item => {
-          return item.cardID == userRfidID
-        })
 
-        let todayEvent = allEvents.filter(item=>{
-          let {startTime, endTime}= item;
+        app.use(middlewares);
 
-          startTime = new moment(startTime)
-          endTime = new moment(endTime)
-          var todayDate = moment()
-
-          console.log(startTime <= todayDate , endTime >= todayDate)
-          return startTime <= todayDate && endTime >= todayDate
-
-        })
-
-        console.log(todayEvent.length , "event len")
-        if(todayEvent.length == 0){
-          res.send({ status: "database-issue" , method: "No event is running now. Are you sure you can drink?"})
-          eventOn = false;
-          useMoney = false;
-          return
-        } else {
-          eventOn = true;
-          useMoney = true;
-
-        }
-
-        // console.log(drinkFound[0])
-        // console.log(rfidFound)
-        // console.log(typeof(drinkFound[0]))
-
-        // check if RFID is in database
-        if (!drinkFound.length || !rfidFound.length) {
-          res.send({ status: "database-issue", method:"user or recipe not found" })
-          
-          return
-        } else {
-          console.log("FOUND DRINK AND RFID")
-          console.log(drinkFound)
-          console.log(rfidFound)
-          useMoney = true;
-        }
-
-        //check price of drink
-        // if drink is WOP and wopAvailalbe, decrement
-        console.log(drinkFound[0].name == "WOP", rfidFound[0].wopAvailable > 0)
-
-        if (drinkFound[0].name == "WOP" && rfidFound[0].wopAvailable > 0 && eventOn) {
-          let newWOP = parseInt(rfidFound[0].wopAvailable) - 1
-          console.log("its wop and still avai", newWOP)
-
-          console.log("foundRFID",rfidFound[0].id)
-          console.log("todayEvent",todayEvent[0].id)
-          console.log("drinkFound",drinkFound[0].id)
-//TODO: add to transactions
-          fetch({
-            //TODO: not working
-      //       query: `
-      //     mutation{
-      //       updateRFID (id: "${rfidFound[0].id}", data:{wopAvailable:${newWOP}, 
-      //       allTransactions: create : {
-      //         Recipes: {
-      //           connect: {id:"${drinkFound[0].id}"}
-      //         },
-      //          assosciatedRfid: {
-      //             connect: {id:"${rfidFound[0].id}"}
-      //          },
-      //          Event: {
-      //            connect: {id:"${todayEvent[0].id}"}
-      //         },
-      //         price: ${0}
-      //       }} ){
-      //         id
-      //         balance
-      //         wopAvailable
-      //       }
-        
-      //   }
-      // `
-
-      // createTransaction(data: {
-      //   assosciatedRfid :{ 
-      //     connect : {
-      //       id: "${rfidFound[0].id}"
-
-      //     }
-      //   },
-      //   price : "${0}",
-      //   Recipes : {
-      //     connect : {
-      //       id : ${drinkFound[0].id} 
-      //     }
-      //   },
-      // }
-      // ){
-      //   id
-      // }
-      query: `
-          mutation{
-            updateRFID (id: "${rfidFound[0].id}", 
-            data:{wopAvailable:${newWOP} }){
-              id
-              balance
-              wopAvailable
-            }
-            
-            
-        
-         }
-       `
-          }).then(stat => {
-            console.log("Created transaction in RFID")
-
-            useMoney = false
-            res.send({ status: "success",method:"daily_WOP", result: stat.data })
-            
-
-          
-
-
-          }).catch(e => {
-            console.log(e)
-            res.send({ e, status: "Something went wrong while decrementing wop" })
-          });
-
-        } 
-        
-        //TODO: check if offers available
-//         else if(rfidFound[0].offers.length > 0 && eventOn) {
-
-//           console.log("offer len",rfidFound[0].offers.length)
-
-//           let offers = rfidFound[0].offers
-          
-//           offers.forEach(offer => {
-//             console.log("offers availalbe", offer)
-            
-//             if(parseInt(offer.quantity) > 0 && offer.drink.id == userRecipeID){
-              
-//               fetch({
-//                 query: `
-//             mutation{
-//               updateOffer (id: "${offer.id}", data:{quantity:${parseInt(offer.quantity) -1}} ){
-//                 drink{
-//                   name
-//                 }
-//                 quantity
-//                 expires
-//               }
-//             }
-//           `
-//               }).then(stat => {
-//                 console.log("Used offer")
-// useMoney = false;
-
-//                 res.send({ status: "success", method: "offer", result: stat.data })
-    
-//               }).catch(e => {
-//                 console.log(e)
-//                 res.send({ e, status: "Something went wrong while decrementing offer" })
-//               });
-
-//             }
-
-//           });
-
-
-// // res.send({ status: "success", result: offers })
-
-//         //TODO: add to transactions
-//         }
-        
-        if (useMoney && eventOn && rfidFound[0].balance >= drinkFound[0].price) {
-          let newBalance = parseFloat(rfidFound[0].balance) - parseFloat(drinkFound[0].price)
-          console.log(parseFloat(rfidFound[0].balance))
-          console.log(parseFloat(drinkFound[0].price))
-          console.log("new balance should be: ", newBalance)
-//TODO: add to transactions
-          fetch({
-            query: `
-        mutation{
-          updateRFID (id: "${rfidFound[0].id}", data:{balance:${newBalance}} ){
-            id
-            balance
-            wopAvailable
-          }
-        }
-      `
-          }).then(stat => {
-            console.log("Changed balance")
-            res.send({ status: "success", method:"balance", result: stat.data })
-
-          }).catch(e => {
-            console.log(e)
-            res.send({ e, status: "Something went wrong while updating balance" })
-
-          }
-          )
-
-        } else {
-
-          res.send({ status: "failed", method:"balance", 
-          result: rfidFound[0]
-        })
-
-
-        }
-
-
-
-
-      });
-
+        app.listen(port, error => {
+            console.log("Listening at port", port)
+            if (error) throw error;
+        });
+    })
+    .catch(error => {
+        console.error(error);
+        process.exit(1);
     });
-
-
-    app.use(middlewares);
-
-    app.listen(port, error => {
-      console.log("Listening at port", port)
-      if (error) throw error;
-    });
-  })
-  .catch(error => {
-    console.error(error);
-    process.exit(1);
-  });
