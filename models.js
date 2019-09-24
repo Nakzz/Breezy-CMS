@@ -89,9 +89,9 @@ exports.User = {
     fields: {
         avatar: { type: File, adapter: avatarFileAdapter },
         name: { type: Text },
-        email: { type: Text, isUnique: true },
+        email: { type: Text,  },
         password: { type: Password },
-        phone: { type: Text, defaultValue: null },
+        phone: { type: Text },
         phoneVerified: { type: Checkbox },
         igHandle: {type: Text},
         RFID: { type: Relationship, ref: 'RFID' },
@@ -108,7 +108,7 @@ exports.User = {
         },
         note: { type: Text },
         isAdmin : {type: Checkbox,  
-            // access: {read:access.userIsAdmin ,update: access.userIsAdmin }
+            access: {read:access.userIsAdmin ,update: access.userIsAdmin }
         },
         referal: { type: Relationship, ref: 'User.referred', many: true },
         referred: { type: Relationship, ref: 'User.referal', many: false },
@@ -130,6 +130,7 @@ exports.User = {
 
 exports.RFID = {
     fields: {
+        // name: {type: Slug, from: 'cardID'},        
         assosciatedUser: {type: Relationship, ref: 'User.RFID'  },
         balance: { type: Float },
         cardID: { type: Text , isUnique: true}, //TODO: might have to display error
@@ -204,6 +205,9 @@ exports.Offers = {
 
 exports.ActiveOffers = {
     fields: {
+         name: {
+             type: Text
+         },
         offer: {
             type: Relationship,
             ref: 'Offer',
@@ -214,7 +218,7 @@ exports.ActiveOffers = {
         quantity: { type: Integer },
         slug: {
             type: Slug,
-            from: 'offer'
+            from: 'name'
         },
 
     },
@@ -226,7 +230,7 @@ exports.ActiveOffers = {
     },
     labelResolver: async (item) => {
 
-        return `${item.offer} <${item.quantity}>`
+        return `${item.name} <${item.quantity}>`
     },
 
 

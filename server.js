@@ -21,7 +21,6 @@ const {
 
 const fetch = createApolloFetch({
     uri: 'http://localhost:3000/admin/api',
-
 });
 
 
@@ -99,6 +98,35 @@ keystone
             });
         })
 
+        app.post('/getUser', async (req, res) => {
+            console.log("GET user IS CALLED")
+            var userRfidID = req.body["rfid"]
+            fetch({
+                query: `query {allRFIDS(where : {cardID : "${userRfidID}"}) 
+                {
+                cardID
+                balance
+                wopAvailable
+            }}`,
+            }).then(allRFID => {
+                // console.log(allRFID.data.allRFIDS)
+
+                if(allRFID.data.allRFIDS[0]){
+                    res.send({
+                        allRFID: allRFID.data.allRFIDS[0]
+                    })
+                }else{
+                    res.status(404).send({
+                        status: "database-issue",
+                        method: "RFID not found"
+                    })
+                }
+
+
+            }).catch(e=>{
+                console.log("Error at getUser", e)
+            });
+        })
 
         app.post('/purchase', async (req, res) => {
 
@@ -192,7 +220,7 @@ keystone
                 if (state.todayEvent.length == 0) {
                     res.status(404).send({
                         status: "database-issue",
-                        method: "No event is running now. Are you sure you can drink?"
+                        method: "no-event"
                     })
                     return
                 } else {
@@ -205,7 +233,7 @@ keystone
                     if (!state.drinkFound) {
                         res.status(404).send({
                             status: "database-issue",
-                            method: "recipe not found"
+                            method: "recipe-not-found"
                         })
                     }
 
@@ -236,7 +264,7 @@ keystone
 
                     let offers = state.rfidFound.assosciatedUser.offers
 
-                    // console.log(offers)
+                    console.log(offers)
 
                     offers = offers.filter(offer => {
                         // console.log(offer.offer)
@@ -467,6 +495,15 @@ keystone
 
                         break;
 
+                    
+                        case "no-balance":
+                        res.status(500).send({
+                            status: "failed",
+                            method: state.method,
+                            result: state.rfidFound // TODO: dont send all transactions and card id. 
+                        })
+
+                        break;
 
                     default:
 

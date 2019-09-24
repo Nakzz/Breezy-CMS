@@ -62,5 +62,6 @@ typings/
 .next
 node_modules/
 
+breezy-Frontend/
 
 dist/

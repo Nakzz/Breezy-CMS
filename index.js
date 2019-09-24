@@ -1,8 +1,10 @@
 const { Keystone } = require('@keystone-alpha/keystone');
 const { GoogleAuthStrategy } = require('@keystone-alpha/auth-passport');
+const { PasswordAuthStrategy } = require('@keystone-alpha/auth-password');
 const { GraphQLApp } = require('@keystone-alpha/app-graphql');
 const { AdminUIApp } = require('@keystone-alpha/app-admin-ui');
 const { MongooseAdapter: Adapter } = require('@keystone-alpha/adapter-mongoose');
+const { NextApp } = require('@keystone-alpha/app-next');
 
 const { staticRoute, staticPath, distDir } = require('./config');
 const {
@@ -21,22 +23,13 @@ const {
 const PROJECT_NAME = "Breezy CMS";
 
 const cookieSecret = '<Something super secret>';
-/**
- * You've got a new KeystoneJS Project! Things you might want to do next:
- * - Add adapter config options (See: https://v5.keystonejs.com/keystone-alpha/adapter-mongoose/)
- * - Select configure access control and authentication (See: https://v5.keystonejs.com/api/access-control)
- */
-
- // const authStrategy = keystone.createAuthStrategy({
- //   type: PasswordAuthStrategy,
- //   list: 'User',
- // });
-
 
 const keystone = new Keystone({
   name: PROJECT_NAME,
   adapter: new Adapter({
-      mongoUri: "mongodb://localhost/breezy-cms"
+      mongoUri: "mongodb://localhost/breezy-cms"  // original 
+    //   mongoUri: "mongodb://localhost/breezy-cms_2" // test_DB
+
   }),
    defaultAccess: {
     list: true,
@@ -44,7 +37,6 @@ const keystone = new Keystone({
   },
 //   cookieSecret,
 });
-
 
 //Create all the lists from their model
 keystone.createList('User', User);
@@ -58,6 +50,10 @@ keystone.createList('Recipe', Recipes);
 keystone.createList('RelaysAmount', RelaysAmount);
 keystone.createList('ActivedOffer', ActiveOffers);
 
+const authStrategy = keystone.createAuthStrategy({
+  type: PasswordAuthStrategy,
+  list: 'User',
+});
 
 
 // const googleStrategy = keystone.createAuthStrategy({
@@ -98,6 +94,7 @@ module.exports = {
   apps: [new GraphQLApp(), new AdminUIApp({ 
       enableDefaultRoute: true, 
     //   googleStrategy,
+    // authStrategy,
           pages: [{
                   label: 'User Management',
                   children: ['User', 'RFID', 'Offer', 'Transaction', 'ActivedOffer'],
@@ -112,5 +109,7 @@ module.exports = {
               },
 
           ],
-      })],
+      }),
+      new NextApp({ dir: 'breezy-Frontend' }),
+    ],
 };
