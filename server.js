@@ -253,8 +253,11 @@ keystone
 
                 //check price of drink
                 // if drink is WOP and wopAvailalbe, decrement
+                let 
+                eventDrink = "Horchata"
+                // eventDrink = "WOP"
 
-                if (state.drinkFound.name == "WOP" && state.rfidFound.wopAvailable > 0 && state.eventOn) {
+                if (state.drinkFound.name == eventDrink && state.rfidFound.wopAvailable > 0 && state.eventOn) {
                     state.newWOP = parseInt(state.rfidFound.wopAvailable) - 1
                     console.log(" Will be decrementing wop")
                     state.method = "daily_WOP"

@@ -94,7 +94,8 @@ exports.User = {
         phone: { type: Text },
         phoneVerified: { type: Checkbox },
         igHandle: {type: Text},
-        RFID: { type: Relationship, ref: 'RFID' },
+        RFID: { type: Relationship, ref: 'RFID', many: false  },
+        balance: { type: Relationship, ref: 'RFID.balance', many: false  },
         prevRFID: { type: Text },
         offers: {
             type: Relationship,
@@ -103,7 +104,7 @@ exports.User = {
         },
         level: {
             type: Select,
-            options: ['admin', 'manager', 'customer', 'guest', 'board', 'support_board'],
+            options: ['admin', 'manager', 'customer', 'guest', 'board', 'support_board', 'posse'],
             // access: {update: access.userIsAdmin }
         },
         note: { type: Text },
@@ -131,7 +132,7 @@ exports.User = {
 exports.RFID = {
     fields: {
         // name: {type: Slug, from: 'cardID'},        
-        assosciatedUser: {type: Relationship, ref: 'User.RFID'  },
+        assosciatedUser: {type: Relationship, ref: 'User.RFID', many: false },
         balance: { type: Float },
         cardID: { type: Text , isUnique: true}, //TODO: might have to display error
         lost: { type: Checkbox },
@@ -213,7 +214,7 @@ exports.ActiveOffers = {
             ref: 'Offer',
             many: false
         },
-        assosciatedUser: { type: Relationship, ref: 'User.offers', many: false },
+        assosciatedUser: { type: Relationship, ref: 'User', many: false },
         // expires: { type: DateTime },
         quantity: { type: Integer },
         slug: {
