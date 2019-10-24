@@ -1,3 +1,5 @@
+var moment = require('moment');
+
 const {
     createApolloFetch
 } = require('apollo-fetch');
@@ -8,16 +10,31 @@ const fetch = createApolloFetch({
 });
 
 const adminID = ['20133293', '22124087211169', '22124087211']
-let allDrinks = [ 'WOP',
-'Beer',
+let allDrinks = ['WOP',
 'Hard Lemonade',
 'Vodka-Cran-Lemonade',
+'Rum shot',
+'Cheap Vodka Shot',
+'Premium Vodka Shot',
+'Tequila shot',
 'Rum and coke',
 'Vodka-Cran',
-'Cheap Vodka Shot',
-'Tequila shot',
-'Premium Vodka Shot',
-'Rum shot' ]
+'Blackout cup',
+'Harder Lemonade',
+'Beer',
+'Long Island Iced Tea',
+'Water',
+'Cranberry Juice',
+'Lemonade',
+'Iced Tea',
+'Horchata',
+'Mango Sunrise',
+'Summer Breezy Breeze ',
+'DRS Dark',
+'Hennesey Shot', ]
+
+
+let eventDate = moment("21-10-2019","DD-MM-YYYY"); 
 
 let popularDrinks = new Array(allDrinks.length).fill(0);
 
@@ -31,14 +48,17 @@ let popularDrinks = new Array(allDrinks.length).fill(0);
                         name
                     }
                        price
+                       createdAt
                    }
             }`,
             }).then(allTransaction => {
 
-                // console.log(allTransaction)
+                console.log(allTransaction.data.allTransactions.length)
                 
                 let allTransactionArray = allTransaction.data.allTransactions
 
+
+                
                 let stats = {
                     sum: 0,
                     freeGave :0,
@@ -48,14 +68,25 @@ let popularDrinks = new Array(allDrinks.length).fill(0);
 
                 allTransactionArray.forEach(element => {
                     // console.log(element)
+
+                    var updateDate = moment(element.createdAt, "DD-MM-YYYY")
+                    // if(Math.abs(moment.duration(eventDate.diff(updateDate)).days()) <= 1){
+                        // console.log(updateDate.isSame(eventDate), updateDate.date())
+                  
+                    
+
                     stats.sum = stats.sum + element.price
 
-                    if(adminID.includes(element.assosciatedRfid.cardID )){
+                    if(element.assosciatedRfid && adminID.includes(element.assosciatedRfid.cardID )){
                         stats.freeGaveCount = stats.freeGaveCount + 1
                         stats.freeGave = stats.freeGave + element.price
                     }
 
                     let recipeName = element.Recipes.name
+
+
+
+
 
                     // if(!allDrinks.includes(recipeName))
                     //     allDrinks.push(recipeName)
@@ -77,13 +108,14 @@ let popularDrinks = new Array(allDrinks.length).fill(0);
                         }
                     })
                     
-                    
+                // }
                     
 
                 });
 
                 
 
+                console.log("Event stats for: ", eventDate.toDate())
                 
                 console.log(stats)
 
