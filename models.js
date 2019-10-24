@@ -103,7 +103,7 @@ exports.User = {
         },
         level: {
             type: Select,
-            options: ['admin', 'manager', 'customer', 'guest', 'board', 'support_board'],
+            options: ['admin', 'manager', 'customer', 'eventGuest', 'board', 'support_board', 'attendee'],
             // access: {update: access.userIsAdmin }
         },
         note: { type: Text },
@@ -138,6 +138,7 @@ exports.RFID = {
         wopAvailable: { type: Integer },
         allowed: { type: Checkbox , defaultValue: true},
         allTransactions: {type: Relationship, ref: 'Transaction', many: true},
+        entry: {type: Integer, defaultValue:0}
 
     },
     labelResolver: item => {

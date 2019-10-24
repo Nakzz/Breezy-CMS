@@ -110,6 +110,6 @@ module.exports = {
 
           ],
       }),
-      new NextApp({ dir: 'breezy-Frontend' }),
+      // new NextApp({ dir: 'breezy-Frontend' }),
     ],
 };
