@@ -155,6 +155,7 @@ keystone
                         }
                                     assosciatedUser {
                                         offers {
+                                            id
                                             offer {
                                                 id
                                                 drink {
@@ -270,7 +271,7 @@ keystone
 
                         state.useMoney = false;
                         state.method = "offer"
-                        state.offerId = offer.offer.id
+                        state.offerId = offer.id
                         state.offerCount = parseInt(offer.quantity) - 1
                         console.log("state.offerCount", state.offerCount)
 
