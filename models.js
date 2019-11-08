@@ -23,14 +23,7 @@ const { atTracking, createdAt } = require('@keystone-alpha/list-plugins');
 const { staticRoute, staticPath, distDir } = require('./config');
 const dev = process.env.NODE_ENV !== 'production';
 
-const fileAdapter = new LocalFileAdapter({
-    directory: `${dev ? '' : `${distDir}/`}${staticPath}/uploads`,
-    route: `${staticRoute}/uploads`,
-});
-const avatarFileAdapter = new LocalFileAdapter({
-    directory: `${staticPath}/avatars`,
-    route: `${staticRoute}/avatars`,
-});
+
 
 // Access control functions
 const userIsAdmin = ({ authentication: { item: user } }) => Boolean(user && user.isAdmin);
@@ -87,7 +80,7 @@ const access = {
 //DEFINE ALL THE MODELS
 exports.User = {
     fields: {
-        avatar: { type: File, adapter: avatarFileAdapter },
+        // avatar: { type: File, adapter: avatarFileAdapter },
         name: { type: Text },
         email: { type: Text,  },
         password: { type: Password },
@@ -219,7 +212,7 @@ exports.ActiveOffers = {
         quantity: { type: Integer },
         slug: {
             type: Slug,
-            from: 'name'
+            from: 'id'
         },
 
     },
@@ -344,9 +337,9 @@ exports.Events = {
         private: { type: Checkbox },
         allowed_guests: { type: Relationship, ref: 'RFID.cardID', many: true },
         posted: { type: DateTime, format: 'DD/MM/YYYY'},
-        startTime: { type: DateTime },
-        endTime: { type: DateTime },
-        flyer: { type: File, adapter: fileAdapter },
+        startTime: { type: DateTime , format: 'MM/DD/YYYY h:mm A'},
+        endTime: { type: DateTime , format: 'MM/DD/YYYY h:mm A'},
+        // flyer: { type: File, adapter: fileAdapter },
         Transactions : { type: Relationship, ref: 'Transaction.whenCreated', many: true },
     },
     labelResolver: item => `${item.name} <${item.posted}>`,
