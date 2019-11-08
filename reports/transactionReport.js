@@ -31,7 +31,7 @@ let allDrinks = ['WOP',
 'Mango Sunrise',
 'Summer Breezy Breeze ',
 'DRS Dark',
-'Hennesey Shot', ]
+'Hennesey Shot','Halloween Drank' ]
 
 
 let eventDate = moment("21-10-2019","DD-MM-YYYY"); 
