@@ -11,9 +11,11 @@ const initialData = require('./initialData');
 var bodyParser = require('body-parser')
 var moment = require('moment');
 
-var apiRoutes = require('./routes/api')
-var actionRoutes = require('./routes/actions.js') // from another file
-var routes = require('./routes/index')
+// var apiRoutes = require('./routes/api')
+// var actionRoutes = require('./routes/actions.js') // from another file
+// var event = require('./routes/event') // TODO: change to CONST
+var vending = require('./routes/vending')
+var management = require('./routes/management')
 
 const {
     createApolloFetch
@@ -45,26 +47,15 @@ keystone
         // }
 
         const app = express();
+        // const socketIOServer = require('http').Server(app);
+        // const io = require('socket.io')(socketIOServer);
+
+
         app.use(cors())
         app.use(bodyParser.json()); // to support JSON-encoded bodies
         app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
             extended: true
         }));
-
-        //ALL ROUTES
-        // app.use('/api', apiRoutes);
-        // app.use('/actions', actionRoutes);
-
-        // app.use("/api", routes) 
-
-
-        // app.get('/reset-db', async (req, res) => {
-        //   Object.values(keystone.adapters).forEach(async adapter => {
-        //     await adapter.dropDatabase();
-        //   });
-        //   await keystone.createItems(initialData);
-        //   res.redirect('/admin');
-        // });
 
 
         app.get('/get-recipes', async (req, res) => {
@@ -164,6 +155,7 @@ keystone
                         }
                                     assosciatedUser {
                                         offers {
+                                            id
                                             offer {
                                                 id
                                                 drink {
@@ -279,7 +271,7 @@ keystone
 
                         state.useMoney = false;
                         state.method = "offer"
-                        state.offerId = offer.offer.id
+                        state.offerId = offer.id
                         state.offerCount = parseInt(offer.quantity) - 1
                         console.log("state.offerCount", state.offerCount)
 
@@ -399,14 +391,12 @@ keystone
                                                      },
                                                      price: 0,
                                                  },
-
                                              }
                                          }) {
                                              id
                                              balance
                                              wopAvailable
                                          }
-
                                          updateActivedOffer(id: "${state.offerId}", data : {
                                              quantity : ${state.offerCount}
                                          }){
@@ -415,7 +405,6 @@ keystone
                                             }
                                             quantity
                                          }
-
                                      }
                                   `
                         }).then(offerReq => {
@@ -522,12 +511,48 @@ keystone
         });
 
 
+        // app.use(function(req, res, next) {
+        //     req.io = io;
+        //     next();
+        //   });
+
+
+        // io.on("connection", (client) => {
+        //     console.log("a client is connected")
+
+        //     // TODO: in the future maybe automatically assign scanners based on using join and lose connection?
+
+        // })
+
+        // io.on('connection', (client) => {
+        //     client.on('subscribeToTimer', (interval) => {
+        //       console.log('client is subscribing to timer with interval ', interval);
+        //       setInterval(() => {
+        //         client.emit('timer', new Date());
+        //       }, interval);
+        //     });
+
+        //     client.on('join', function (data) {
+        //         console.log(data)
+        //     })
+        //   });
+          
+
+
+        // app.use('/event', event);
+        // app.use('/vending', vending);
+        app.use('/management', management)
+
+
         app.use(middlewares);
 
         app.listen(port, error => {
             console.log("Listening at port", port)
             if (error) throw error;
         });
+
+        // socketIOServer.listen(4200)
+
     })
     .catch(error => {
         console.error(error);
