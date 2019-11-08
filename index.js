@@ -4,7 +4,7 @@ const { PasswordAuthStrategy } = require('@keystone-alpha/auth-password');
 const { GraphQLApp } = require('@keystone-alpha/app-graphql');
 const { AdminUIApp } = require('@keystone-alpha/app-admin-ui');
 const { MongooseAdapter: Adapter } = require('@keystone-alpha/adapter-mongoose');
-const { NextApp } = require('@keystone-alpha/app-next');
+
 
 const { staticRoute, staticPath, distDir } = require('./config');
 const {
@@ -110,6 +110,5 @@ module.exports = {
 
           ],
       }),
-      // new NextApp({ dir: 'breezy-Frontend' }),
     ],
 };
