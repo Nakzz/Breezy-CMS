@@ -69,7 +69,7 @@ let popularDrinks = new Array(allDrinks.length).fill(0);
                 allTransactionArray.forEach(element => {
                     // console.log(element)
 
-                    var updateDate = moment(element.createdAt, "DD-MM-YYYY")
+                    var updateDate = moment(element.createdAt, "YYYY-MM-DD")
                     // if(Math.abs(moment.duration(eventDate.diff(updateDate)).days()) <= 1){
                         // console.log(updateDate.isSame(eventDate), updateDate.date())
                   

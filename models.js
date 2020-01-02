@@ -96,7 +96,7 @@ exports.User = {
         },
         level: {
             type: Select,
-            options: ['admin', 'manager', 'customer', 'eventGuest', 'board', 'support_board', 'attendee'],
+            options: ['admin', 'manager', 'customer', 'customer_black', 'eventGuest', 'board', 'support_board', 'attendee', 'posse'],
             // access: {update: access.userIsAdmin }
         },
         note: { type: Text },
